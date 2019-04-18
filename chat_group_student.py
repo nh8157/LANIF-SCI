@@ -131,7 +131,6 @@ if __name__ == "__main__":
     g.join('b')
     g.join('c')
     g.join('d')
-    g.members = {}
     print(g.list_all())
 
     g.connect('a', 'b')
@@ -141,6 +140,4 @@ if __name__ == "__main__":
     g.leave('c')
     print(g.list_all())
     g.disconnect('b')
-
-
     print(g.list_all())
