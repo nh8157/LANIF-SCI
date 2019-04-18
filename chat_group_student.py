@@ -20,7 +20,7 @@ class Group:
 
     def __init__(self):
         self.members = {} # {name1: state1, name2: state2, ...}
-        self.chat_grps = {} # {0: [name1, name2], 1: [a, b, c], ...}
+        self.chat_grps = {} # {1: [name1, name2], 2: [a, b, c], ...}
         self.grp_ever = 0
 
     def join(self, name):
@@ -50,6 +50,7 @@ class Group:
         # ---- end of your code --- #
         return
 
+
     def find_group(self, name):
         """
         Auxiliary function internal to the class; return two
@@ -65,6 +66,9 @@ class Group:
 
         # ---- end of your code --- #
         return found, group_key
+
+
+
 
     def connect(self, me, peer):
         """
@@ -127,6 +131,7 @@ if __name__ == "__main__":
     g.join('b')
     g.join('c')
     g.join('d')
+    g.members = {}
     print(g.list_all())
 
     g.connect('a', 'b')
@@ -136,4 +141,6 @@ if __name__ == "__main__":
     g.leave('c')
     print(g.list_all())
     g.disconnect('b')
+
+
     print(g.list_all())
