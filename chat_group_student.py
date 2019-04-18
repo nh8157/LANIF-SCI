@@ -20,7 +20,7 @@ class Group:
 
     def __init__(self):
         self.members = {} # {name1: state1, name2: state2, ...}
-        self.chat_grps = {} # {0: [name1, name2], 1: [n3, n4, n5..}, ...}
+        self.chat_grps = {} # {0: [name1, name2], 1: [a, b, c], ...}
         self.grp_ever = 0
 
     def join(self, name):
@@ -85,6 +85,10 @@ class Group:
     def disconnect(self, me):
         """
         find myself in the group, quit, but stay in the system
+
+        Remove "me" from my current chat group.
+        If the group has only one peer left,
+        remove that peer as well, and delete the chat group.
         """
         # IMPLEMENTATION
         # ---- start your code ---- #
@@ -104,7 +108,9 @@ class Group:
     # implement
     def list_me(self, me):
         """
-        return a list, "me" followed by other peers in my group
+        Return the chat group which "name" is in, as a list.
+        IMPORTANT: "name"  is the first element in that returning list.
+        (hint: use find_group)
         """
         my_list = []
         # IMPLEMENTATION
