@@ -27,7 +27,7 @@ class ClientSM:
         return self.me
 
     def connect_to(self, peer):
-        msg = json.dumps({"action":"connect", "target":peer})
+        msg = json.dumps({"action":"connect", "target":peer})  
         mysend(self.s, msg)
         response = json.loads(myrecv(self.s))
         if response["status"] == "success":
@@ -87,18 +87,19 @@ class ClientSM:
                 elif my_msg[0] == '?':
                     term = my_msg[1:].strip()
                     mysend(self.s, json.dumps({"action":"search", "target":term}))
-                    search_rslt = json.loads(myrecv(self.s))["results"].strip()
+                    search_rslt = json.loads(myrecv(self.s))["results"]
                     if (len(search_rslt)) > 0:
                         self.out_msg += search_rslt + '\n\n'
                     else:
                         self.out_msg += '\'' + term + '\'' + ' not found\n\n'
 
-                elif my_msg[0] == 'p' and my_msg[1:].isdigit():
+                elif my_msg[0] == 'p' or my_msg[1:].isdigit():
                     poem_idx = my_msg[1:].strip()
                     mysend(self.s, json.dumps({"action":"poem", "target":poem_idx}))
                     poem = json.loads(myrecv(self.s))["results"]
                     if (len(poem) > 0):
-                        self.out_msg += poem + '\n\n'
+                        for i in poem:
+                            self.out_msg += i + '\n'
                     else:
                         self.out_msg += 'Sonnet ' + poem_idx + ' not found\n\n'
 
@@ -115,11 +116,10 @@ class ClientSM:
                 if peer_msg["action"] == "connect":
 
                     # ----------your code here------#
-                    print(peer_msg)
-                    pass
-
-
-
+                    peer = peer_msg["from"]
+                    self.peer = peer
+                    self.out_msg += "You are connected with " + self.peer
+                    self.state = S_CHATTING
                     # ----------end of your code----#
                     
 #==============================================================================
@@ -134,15 +134,15 @@ class ClientSM:
                     self.state = S_LOGGEDIN
                     self.peer = ''
             if len(peer_msg) > 0:    # peer's stuff, coming in
-  
-
                 # ----------your code here------#
                 peer_msg = json.loads(peer_msg)
-                print(peer_msg)
-                pass
-
-
-
+                if peer_msg["action"] == "exchange":
+                    self.out_msg += peer_msg["message"]
+                elif peer_msg["action"] == "connect":
+                    self.out_msg += "(" + peer_msg["from"] + " is in)"
+                elif peer_msg["action"] == "disconnect":
+                    self.disconnect()
+                    self.state = S_LOGGEDIN
                 # ----------end of your code----#
                 
             # Display the menu again

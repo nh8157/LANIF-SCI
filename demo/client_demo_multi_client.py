@@ -14,7 +14,7 @@ while True:
     print(data.decode('UTF-8'))
     if msg == 'exit':
         data = s.recv(1024)
-        print ('Received')
+        print ('Received') 
         print(data.decode('UTF-8'))
         break
 

@@ -118,6 +118,6 @@ if __name__ == "__main__":
     g.join('a')
     g.join('b')
     print(g.list_all('a'))
-    g.list_all2('a')
+    print(g.list_all2('a'))
     g.connect('a', 'b')
     print(g.list_all('b'))
