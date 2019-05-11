@@ -46,11 +46,12 @@ class Server:
         try:
             msg = json.loads(myrecv(sock))
             if len(msg) > 0:
-
                 if msg["action"] == "create":
                     name = msg["name"]
                     password = msg["password"]       
                     if name not in self.client_password.keys():
+                        file = open(file_name, 'a')
+                        file.write(name + ":" + password + "\n")
                         # move socket from new clients list to logged clients
                         self.new_clients.remove(sock)
                         # add into the name to sock mapping
@@ -276,6 +277,13 @@ class Server:
 # ==============================================================================
     def run(self):
         print('starting server...')
+        file = open(file_name, 'r')
+        file_data = file.readlines()
+        for i in range(len(file_data)):
+            info = file_data[i].split(":")
+            self.client_password[info[0]] = info[1][:-2].strip()
+        print(self.client_password)
+        file.close()
         while(1):
             read, write, error = select.select(self.all_sockets, [], [])
             print('checking logged clients..')
