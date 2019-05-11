@@ -23,6 +23,7 @@ class Server:
         self.logged_sock2name = {}  # dict mapping socket to user name
         self.all_sockets = []
         self.group = grp.Group()
+        self.client_password = {}
         # start server
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind(SERVER)
@@ -40,15 +41,16 @@ class Server:
         self.new_clients.append(sock)
         self.all_sockets.append(sock)
 
-    def login(self, sock):
+    def loginPage(self, sock):
         # read the msg that should have login code plus username
         try:
             msg = json.loads(myrecv(sock))
             if len(msg) > 0:
 
-                if msg["action"] == "login":
+                if msg["action"] == "create":
                     name = msg["name"]
-                    if self.group.is_member(name) != True:
+                    password = msg["password"]       
+                    if name not in self.client_password.keys():
                         # move socket from new clients list to logged clients
                         self.new_clients.remove(sock)
                         # add into the name to sock mapping
@@ -62,6 +64,7 @@ class Server:
                             except IOError:  # chat index does not exist, then create one
                                 self.indices[name] = indexer.Index(name)
                         print(name + ' logged in')
+                        self.client_password[name] = password
                         self.group.join(name)
                         mysend(sock, json.dumps(
                             {"action": "login", "status": "ok"}))
@@ -69,6 +72,31 @@ class Server:
                         mysend(sock, json.dumps(
                             {"action": "login", "status": "duplicate"}))
                         print(name + ' duplicate login attempt')
+                    
+                elif msg["action"] == "login":
+                    name = msg["name"]
+                    password = msg["password"]
+                    if name in self.client_password.keys():
+                        if self.client_password[name] == password:
+                            # move socket from new clients list to logged clients
+                            self.new_clients.remove(sock)
+                            # add into the name to sock mapping
+                            self.logged_name2sock[name] = sock
+                            self.logged_sock2name[sock] = name
+                            print(name + ' logged in')
+                            self.group.join(name)
+                            if name not in self.indices.keys():
+                                try:
+                                    self.indices[name] = pkl.load(
+                                        open(name + '.idx', 'rb'))
+                                except IOError:  # chat index does not exist, then create one
+                                    self.indices[name] = indexer.Index(name)
+                            mysend(sock, json.dumps(
+                                {"action": "login", "status": "ok"}))
+                        else:
+                            mysend(sock, json.dumps({"action": "login", "status": "password"}))
+                    else:
+                        mysend(sock, json.dumps({"action": "login", "status": "username"}))
                 else:
                     print('wrong code received')
             else:  # client died unexpectedly
@@ -118,6 +146,26 @@ class Server:
                     msg = json.dumps(
                         {"action": "connect", "status": "no-user"})
                 mysend(from_sock, msg)
+            
+# ==============================================================================
+# file transfer between users
+# ==============================================================================                
+                
+            elif msg["action"] == "transfer":
+                to_name = msg["target"]
+                from_name = self.logged_name2sock[from_sock]
+                if to_name == from_name:
+                    msg = json.dumps({"action": "transfer", "status": "self"})
+                elif to_name in self.group.members:
+                    if to_name not in self.group.chat_grps.values():
+                        to_sock = self.logged_name2sock[to_name]
+                        mysend(to_sock, )
+                    else:
+                        msg = json.dumps({"action": "transfer", "status": "busy"})
+                else:
+                    msg = json.dumps({"action": "transfer", "status": "none"})
+                        
+                    
 # ==============================================================================
 # handle messeage exchange: IMPLEMENT THIS
 # ==============================================================================
@@ -213,6 +261,7 @@ class Server:
                 # ---- end of your code --- #
                 mysend(from_sock, json.dumps(
                     {"action": "search", "results": result}))
+            
 
 # ==============================================================================
 #                 the "from" guy really, really has had enough
@@ -236,7 +285,7 @@ class Server:
             print('checking new clients..')
             for newc in self.new_clients[:]:
                 if newc in read:
-                    self.login(newc)
+                    self.loginPage(newc)
             print('checking for new connections..')
             if self.server in read:
                 # new client request

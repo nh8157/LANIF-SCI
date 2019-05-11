@@ -5,6 +5,7 @@ Created on Sun Apr  5 00:00:32 2015
 """
 from chat_utils import *
 import json
+import sys
 
 class ClientSM:
     def __init__(self, s):
@@ -26,6 +27,32 @@ class ClientSM:
     def get_myname(self):
         return self.me
 
+    def send_to(self, peer):
+        print("here")
+        input("Which file do you want?")
+        file_name = "roman.txt"
+#        try:
+        file = open(file_name, 'rb')
+        while True:
+            file_data = file.read(1024)
+            if not file_data:
+                break
+            msg = json.dumps({"action":"transfer", "target":peer, "data":file_data})
+            mysend(self.s, msg) 
+        file.close()
+        response = json.loads(myrecv(self.s))
+        if response["status"] == "self":
+            self.out_msg += "Cannot transfer file to yourself\n"
+        elif response["status"] == "busy":
+            self.out_msg += "User is chatting, cannot transfer files\n" 
+        elif response["status"] == "none":
+            self.out_msg += "User is not online, try agains later\n"
+        else:
+            self.out_msg += "Transfer complete successfully\n"
+#        except:
+#            self.out_msg += "An error occurred when opening the file\n"
+                
+    
     def connect_to(self, peer):
         msg = json.dumps({"action":"connect", "target":peer})  
         mysend(self.s, msg)
@@ -50,6 +77,7 @@ class ClientSM:
 
     def proc(self, my_msg, peer_msg):
         self.out_msg = ''
+        
 #==============================================================================
 # Once logged in, do a few things: get peer listing, connect, search
 # And, of course, if you are so bored, just go
@@ -73,6 +101,12 @@ class ClientSM:
                     logged_in = json.loads(myrecv(self.s))["results"]
                     self.out_msg += 'Here are all the users in the system:\n'
                     self.out_msg += logged_in
+                
+                elif my_msg[0] == 'f':
+                    peer = my_msg[1:].strip()
+                    self.peer = peer
+                    self.state = S_TRANSFER
+                    self.out_msg += "Which file do you want to send?"
 
                 elif my_msg[0] == 'c':
                     peer = my_msg[1:]
@@ -83,7 +117,7 @@ class ClientSM:
                         self.out_msg += '-----------------------------------\n'
                     else:
                         self.out_msg += 'Connection unsuccessful\n'
-
+                    
                 elif my_msg[0] == '?':
                     term = my_msg[1:].strip()
                     mysend(self.s, json.dumps({"action":"search", "target":term}))
@@ -148,6 +182,20 @@ class ClientSM:
             # Display the menu again
             if self.state == S_LOGGEDIN:
                 self.out_msg += menu
+        elif self.state == S_TRANSFER:
+            file_name = my_msg
+            try:
+                file = open(file_name, 'rb')
+                while True:
+                    file_data = file.read(1024)
+                    if not file_data:
+                        break
+                    msg = json.dumps({"action": "transfer", "target": self.peer, "data": file_data})
+                    mysend(self.s, msg)
+            except:
+                self.out_msg += "An error occurred when transferring the file"
+            self.state = S_LOGGEDIN
+                
 #==============================================================================
 # invalid state
 #==============================================================================

@@ -59,26 +59,85 @@ class Client:
             print(self.system_msg)
             self.system_msg = ''
 
-    def login(self):
-        my_msg, peer_msg = self.get_msgs()
+    def loginPage(self):
+        my_msg = ''
+        while my_msg == '':
+            my_msg, peer_msg = self.get_msgs()
+            self.output()
+        if len(my_msg) > 0:
+            if my_msg == "y":
+                while self.createAccount() != True:
+                    self.output()
+            elif my_msg == "n":
+                while self.login() != True:
+                    self.output()
+        else:
+            print("no input")
+          
+    def createAccount(self):
+        self.system_msg += "Please enter your name"
+        self.output()
+        my_msg = ''
+        while my_msg == '':
+            my_msg, peer_msg = self.get_msgs()
+            self.output()        
         if len(my_msg) > 0:
             self.name = my_msg
-            msg = json.dumps({"action":"login", "name":self.name})
-            self.send(msg)
-            response = json.loads(self.recv())
-            if response["status"] == 'ok':
-                self.state = S_LOGGEDIN
-                self.sm.set_state(S_LOGGEDIN)
-                self.sm.set_myname(self.name)
-                self.print_instructions()
-                return (True)
-            elif response["status"] == 'duplicate':
-                self.system_msg += 'Duplicate username, try again'
-                return False
+        self.system_msg += "Please enter your password"
+        my_msg = ''
+        while my_msg == '':
+            my_msg, peer_msg = self.get_msgs()
+            self.output()
+        if len(my_msg) > 0:
+            self.password = my_msg
+        msg = json.dumps({"action":"create", "name":self.name, "password":self.password})
+        self.send(msg)
+        print("sent")
+        response = json.loads(self.recv())
+        if response["status"] == "ok":
+            self.state = S_LOGGEDIN
+            self.sm.set_state(S_LOGGEDIN)
+            self.sm.set_myname(self.name)
+            self.system_msg += "Account created successfully\n"
+            self.print_instructions()
+            return True
+        elif response["status"] == "duplicate":
+            self.system_msg += "Duplicate username, try again"
+            return False
+
+    def login(self):
+        self.system_msg += "Please enter your name"
+        self.output()
+        my_msg = ''
+        while my_msg == '':
+            my_msg, peer_msg = self.get_msgs()
+            self.output()
+        if len(my_msg) > 0:
+            self.name = my_msg
+        self.system_msg += "Please enter your password"
+        my_msg = ''
+        while my_msg == '':
+            my_msg, peer_msg = self.get_msgs()
+            self.output()
+        if len(my_msg) > 0:
+            self.password = my_msg
+        msg = json.dumps({"action":"login", "name":self.name, "password":self.password})
+        self.send(msg)
+        response = json.loads(self.recv())
+        if response["status"] == 'ok':
+            self.state = S_LOGGEDIN
+            self.sm.set_state(S_LOGGEDIN)
+            self.sm.set_myname(self.name)
+            self.print_instructions()
+            return True
+        elif response["status"] == 'username':
+            self.system_msg += 'User does not exist'
+            return False
+        elif response["status"] == 'password':
+            self.system_msg += 'Wrong password'
         else:               # fix: dup is only one of the reasons
-           return(False)
-
-
+            return False
+           
     def read_input(self):
         while True:
             text = sys.stdin.readline()[:-1]
@@ -90,10 +149,9 @@ class Client:
     def run_chat(self):
         self.init_chat()
         self.system_msg += 'Welcome to ICS chat\n'
-        self.system_msg += 'Please enter your name: '
+        self.system_msg += 'Are you a new client?(y/n)'
         self.output()
-        while self.login() != True:
-            self.output()
+        self.loginPage()
         self.system_msg += 'Welcome, ' + self.get_name() + '!'
         self.output()
         while self.sm.get_state() != S_OFFLINE:
