@@ -22,7 +22,9 @@ S_OFFLINE   = 0
 S_CONNECTED = 1
 S_LOGGEDIN  = 2
 S_CHATTING  = 3
-S_TRANSFER = 4
+S_TRANSFER  = 4
+S_TRANSFERS = 4
+S_TRANSFERR = 5
 
 file_name = "userInfo.txt"
 
@@ -76,6 +78,13 @@ def myrecv(s):
     #print ('received '+message)
     return (msg)
 
+def mysendF(s, msg):
+    s.send(msg)
+
+def myrecvF(s):
+    file_data = s.recv(1024)
+    return file_data
+    
 def text_proc(text, user):
     ctime = time.strftime('%d.%m.%y,%H:%M', time.localtime())
     return('(' + ctime + ') ' + user + ' : ' + text) # message goes directly to screen

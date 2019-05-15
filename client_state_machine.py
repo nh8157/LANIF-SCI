@@ -6,6 +6,7 @@ Created on Sun Apr  5 00:00:32 2015
 from chat_utils import *
 import json
 import sys
+import base64
 
 class ClientSM:
     def __init__(self, s):
@@ -28,31 +29,16 @@ class ClientSM:
         return self.me
 
     def send_to(self, peer):
-        print("here")
-        input("Which file do you want?")
-        file_name = "roman.txt"
-#        try:
-        file = open(file_name, 'rb')
-        while True:
-            file_data = file.read(1024)
-            if not file_data:
-                break
-            msg = json.dumps({"action":"transfer", "target":peer, "data":file_data})
-            mysend(self.s, msg) 
-        file.close()
+        msg = json.dumps({"action": "transfer", "target": peer})
+        mysend(self.s, msg)
         response = json.loads(myrecv(self.s))
-        if response["status"] == "self":
-            self.out_msg += "Cannot transfer file to yourself\n"
-        elif response["status"] == "busy":
-            self.out_msg += "User is chatting, cannot transfer files\n" 
-        elif response["status"] == "none":
-            self.out_msg += "User is not online, try agains later\n"
+        if response["status"] == "available":
+            self.peer = peer
+            self.out_msg += "You are ready to send file to " + self.peer
+            return True
         else:
-            self.out_msg += "Transfer complete successfully\n"
-#        except:
-#            self.out_msg += "An error occurred when opening the file\n"
-                
-    
+            self.out_msg += "Unsuccessful\n"
+            return False
     def connect_to(self, peer):
         msg = json.dumps({"action":"connect", "target":peer})  
         mysend(self.s, msg)
@@ -104,9 +90,11 @@ class ClientSM:
                 
                 elif my_msg[0] == 'f':
                     peer = my_msg[1:].strip()
-                    self.peer = peer
-                    self.state = S_TRANSFER
-                    self.out_msg += "Which file do you want to send?"
+                    if self.send_to(peer) == True:
+                        self.state = S_TRANSFERS
+                        self.out_msg += "Which file do you want to send?"
+                    else:
+                        self.out_msg += "Please try again later\n"
 
                 elif my_msg[0] == 'c':
                     peer = my_msg[1:]
@@ -156,6 +144,10 @@ class ClientSM:
                     self.state = S_CHATTING
                     # ----------end of your code----#
                     
+                elif peer_msg["action"] == "transfer":
+                    self.peer = peer_msg["from"]
+                    self.out_msg += peer_msg["from"] + " is transferring a file to you"
+                    self.state = S_TRANSFERR
 #==============================================================================
 # Start chatting, 'bye' for quit
 # This is event handling instate "S_CHATTING"
@@ -182,20 +174,37 @@ class ClientSM:
             # Display the menu again
             if self.state == S_LOGGEDIN:
                 self.out_msg += menu
-        elif self.state == S_TRANSFER:
-            file_name = my_msg
-            try:
-                file = open(file_name, 'rb')
+        elif self.state == S_TRANSFERS:
+            if len(my_msg) > 0:
+                name_file = my_msg
+                mysend(self.s, json.dumps({"action": "transfer", "target": self.peer, "filename": name_file}))
+                try:
+                    file = open(name_file, 'rb')
+                    while True:
+                        print("sending")
+                        file_data = file.read(1024)
+                        mysendF(self.s, file_data)
+                        if not file_data:
+                            break
+                    print("file sent")
+                    file.close()
+                except:
+                    self.out_msg += "An error occurred when transferring the file\n"
+                self.state = S_LOGGEDIN
+        
+        elif self.state == S_TRANSFERR:
+            if len(peer_msg) > 0:
+                peer_msg = json.loads(peer_msg)
+                filename = peer_msg["filename"]
+                file = open(filename, 'wb')
                 while True:
-                    file_data = file.read(1024)
+                    file_data = myrecvF(self.s)
                     if not file_data:
                         break
-                    msg = json.dumps({"action": "transfer", "target": self.peer, "data": file_data})
-                    mysend(self.s, msg)
-            except:
-                self.out_msg += "An error occurred when transferring the file"
-            self.state = S_LOGGEDIN
-                
+                    file.write(file_data)
+                file.close()
+                self.out_msg += "file received"
+                self.state = S_LOGGEDIN
 #==============================================================================
 # invalid state
 #==============================================================================
