@@ -56,7 +56,7 @@ class Client:
 
     def output(self):
         if len(self.system_msg) > 0:
-            print(self.system_msg)
+            print("\033[1;33;40m", self.system_msg ,"\033[0m")
             self.system_msg = ''
 
     def loginPage(self):

@@ -4,9 +4,14 @@ Created on Sun Apr  5 00:00:32 2015
 @author: zhengzhang
 """
 from chat_utils import *
+from snake_single import *
+from Snake_final import *
+from pygame import *
+import flappy
 import json
-import sys
-import base64
+import game
+import os
+import game_2048
 
 class ClientSM:
     def __init__(self, s):
@@ -34,7 +39,7 @@ class ClientSM:
         response = json.loads(myrecv(self.s))
         if response["status"] == "available":
             self.peer = peer
-            self.out_msg += "You are ready to send file to " + self.peer
+            self.out_msg += "You are ready to send file to " + self.peer + "\n"
             return True
         else:
             self.out_msg += "Unsuccessful\n"
@@ -87,12 +92,27 @@ class ClientSM:
                     logged_in = json.loads(myrecv(self.s))["results"]
                     self.out_msg += 'Here are all the users in the system:\n'
                     self.out_msg += logged_in
+                elif my_msg == 'Game':
+                    self.out_msg += menu_game
+                elif my_msg == 'Snake_s':
+                    Game()
+                elif my_msg == 'Snake_m':
+                    Snake()
+                elif my_msg == '2048':
+                    game_2048.main()   
+                elif my_msg == 'Flappy Bird':
+                    flappy.main()
+                elif my_msg == 'Space Shooter':
+                    os.system("/Users/wangding/Desktop/Final_chat/spaceShooter.py") 
+                elif my_msg == 'Online Game':
+                    g = game.Game(500, 500)
+                    g.run()
                 
                 elif my_msg[0] == 'f':
                     peer = my_msg[1:].strip()
                     if self.send_to(peer) == True:
                         self.state = S_TRANSFERS
-                        self.out_msg += "Which file do you want to send?"
+                        self.out_msg += "Which file do you want to send?\n"
                     else:
                         self.out_msg += "Please try again later\n"
 
@@ -181,7 +201,6 @@ class ClientSM:
                 try:
                     file = open(name_file, 'rb')
                     while True:
-                        print("sending")
                         file_data = file.read(1024)
                         mysendF(self.s, file_data)
                         if not file_data:
@@ -191,12 +210,24 @@ class ClientSM:
                 except:
                     self.out_msg += "An error occurred when transferring the file\n"
                 self.state = S_LOGGEDIN
-        
+        elif self.state == S_GAMMING:
+            while True:
+                for event in pygame.event.get():
+                    # Quit game
+                    if event.type == pygame.QUIT:
+                        try:
+                            pygame.quit()
+                            exit()
+                            self.state = S_LOGGEDIN
+                        except:
+                            sys.exit()
+                            self.state = S_LOGGEDIN
         elif self.state == S_TRANSFERR:
             if len(peer_msg) > 0:
                 peer_msg = json.loads(peer_msg)
                 filename = peer_msg["filename"]
                 file = open(filename, 'wb')
+                print("receiving...")
                 while True:
                     file_data = myrecvF(self.s)
                     if not file_data:

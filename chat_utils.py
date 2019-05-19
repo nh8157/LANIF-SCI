@@ -2,9 +2,9 @@ import socket
 import time
 
 # use local loop back address by default
-#CHAT_IP = '127.0.0.1'
+CHAT_IP = '127.0.0.1'
 # CHAT_IP = socket.gethostbyname(socket.gethostname())
-CHAT_IP = ''#socket.gethostbyname(socket.gethostname())
+# CHAT_IP = ''#socket.gethostbyname(socket.gethostname())
 
 CHAT_PORT = 1122
 SERVER = (CHAT_IP, CHAT_PORT)
@@ -16,15 +16,25 @@ menu = "\n++++ Choose one of the following commands\n \
         f _peer_ _filename_: to send files to the _peer_\n \
         ? _term_: to search your chat logs where _term_ appears\n \
         p _#_: to get number <#> sonnet\n \
+        Game: Let's escape from final!\n \
         q: to leave the chat system\n\n"
-
+        
+menu_game = "\n+++++ Please choose a game you want to play\n \
+             Snake_s : Single Player Game\n \
+             Snake_M : Two Players Game\n \
+             Flappy Bird \n \
+             2048\n \
+             Space Shooter\n \
+             Online Game(test)\n "
+             
 S_OFFLINE   = 0
 S_CONNECTED = 1
 S_LOGGEDIN  = 2
 S_CHATTING  = 3
 S_TRANSFER  = 4
-S_TRANSFERS = 4
-S_TRANSFERR = 5
+S_TRANSFERS = 5
+S_TRANSFERR = 6
+S_GAMMING    = 7
 
 file_name = "userInfo.txt"
 

@@ -40,7 +40,7 @@ class Server:
     def new_client(self, sock):
         # add to all sockets and to new clients
         print('new client...')
-        sock.setblocking(2)
+        sock.setblocking(1)
         self.new_clients.append(sock)
         self.all_sockets.append(sock)
 
@@ -295,7 +295,6 @@ class Server:
                     mysendF(to_sock, file_data)
                     if not file_data:
                         break
-                print("sent")
                 self.state = S_LOGGEDIN
 
                     
