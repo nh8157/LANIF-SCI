@@ -27,6 +27,7 @@ The real-time game involves two red blocks moving in a rectangle space. It is am
 ## **Bugs Pending to be Fixed**
 - The server would stuck and die in its while loop receiving binary data, which would lead to receiving incomplete binary data, and result in damaged file. On the receiving side, however, most of the files transferred are openable. 
 - The online could not be added more functions to. As real-time display of information requires massive data transfer, the serve would die easily when more data needs to be sent. 
+- The game path is in full path, instead of relative path
 
 ## **Acknowledgements**
 Great thanks to Joyce, Peter Huang, Tom Zhu, Wen and Dragon Liao, who have helped us out with numerous obstacles we encountered throughout the process. 
