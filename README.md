@@ -1,5 +1,8 @@
 # ICS Final Project by Sheldon & Ding
 
+## **Video Demonstration**
+[Project Demonstration](https://youtu.be/ZE5z39jZEQo)
+
 ## **Features**
 - Log-in system
 - File transfer system
